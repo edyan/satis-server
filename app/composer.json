@@ -1,0 +1,19 @@
+{
+    "name": "edyan/satis-server",
+    "description": "Endpoint to manage satis actions",
+    "type": "project",
+    "require": {
+        "slim/slim": "^4.4",
+        "slim/psr7": "^1.0",
+        "vlucas/phpdotenv": "^4.1",
+        "symfony/process": "^5.0"
+    },
+    "license": "Apache2",
+    "authors": [
+        {
+            "name": "Emmanuel Dyan",
+            "email": "emmanueldyan@gmail.com"
+        }
+    ],
+    "minimum-stability": "stable"
+}

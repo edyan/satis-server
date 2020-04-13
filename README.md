@@ -2,5 +2,5 @@
 [![Docker Pulls](https://img.shields.io/docker/pulls/edyan/satis-server.svg)](https://hub.docker.com/r/edyan/satis-server/)
 [![Build Status](https://travis-ci.com/edyan/docker-php.svg?branch=master)](https://travis-ci.com/edyan/docker-php)
 
-# Composer Satis Server@
+# Composer Satis Server
 Docker Hub: https://hub.docker.com/r/edyan/satis-server

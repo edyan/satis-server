@@ -31,8 +31,7 @@ if [[ $? -eq 0 ]]; then
     echo -e "${GREEN}Build Done${NC}."
     echo ""
     echo "Run for development :"
-    echo "  docker run -v $(pwd)/app:/app -v $(pwd)/volumes/composer:/composer -v $(pwd)/volumes/build/:/build -p 8080:8080 -ti --rm --name satis-server-test-ctn edyan/satis-server:latest
- ${TAG}"
+    echo "  docker run -v $(pwd)/app:/app -v $(pwd)/volumes/composer:/composer -v $(pwd)/volumes/build/:/build -p 8080:8080 -ti --rm --name satis-server-test-ctn ${TAG}"
     echo "  docker exec -ti satis-server-test-ctn /bin/bash"
     echo "Once Done : "
     echo "  docker stop satis-server-test-ctn"

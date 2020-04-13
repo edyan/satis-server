@@ -7,6 +7,7 @@ use Psr\Http\Message\ResponseInterface as Response;
 use Psr\Http\Message\ServerRequestInterface as Request;
 use Slim\Exception\HttpBadRequestException;
 use Slim\Exception\HttpNotFoundException;
+use Symfony\Component\Filesystem\Filesystem;
 use Symfony\Component\Process\Exception\ProcessFailedException;
 use Symfony\Component\Process\Process;
 
@@ -18,6 +19,9 @@ $container = new DI\Container();
 $dotenv = Dotenv\Dotenv::createImmutable(__DIR__ . '/../');
 $dotenv->load();
 $debug = (bool)getenv('DEBUG') ?: false;
+$container->set('artifactsDir', getenv('ARTIFACTS_DIR'));
+
+$pkgMatch = '{package:[a-z0-9\-]+/[a-z0-9\-]+}';
 # /Manage conf
 
 # Create App
@@ -28,9 +32,20 @@ $app = Slim\Factory\AppFactory::create();
 # A few methods
 function getFile(Request $req, Response $resp)
 {
-    $filename = '/build/' . $req->getUri()->getPath();
+    $filename = $req->getUri()->getPath();
+    if (strpos($filename, '/build/') === false) {
+        $filename = '/build/' . $filename;
+    }
+
     $ext = pathinfo($filename, PATHINFO_EXTENSION);
-    $contentType = $ext === 'json' ? 'application/json' : 'text/html';
+    switch ($ext) {
+        case 'json':
+        case 'zip':
+            $contentType = 'application/' . $ext;
+            break;
+        default:
+            $contentType = 'text/html';
+    }
     if (!file_exists($filename)) {
        throw new HttpNotFoundException($req);
     }
@@ -51,8 +66,7 @@ function executeSatis(Request $req, Response $resp, array $cmd)
         throw new HttpBadRequestException($req, cleanOutput($process->getErrorOutput()));
     }
 
-    $resp->getBody()
-        ->write(json_encode(['message' => cleanOutput($process->getOutput())]));
+    $resp->getBody()->write(json_encode(['message' => cleanOutput($process->getOutput())]));
 
     return $resp->withHeader('Content-Type', 'application/json');
 }
@@ -64,6 +78,27 @@ function cleanOutput(string $output)
     $output = str_replace("\n", '. ', $output); // New lines.
 
     return $output;
+}
+
+function getPackageVersion(Request $req, string $filename): string
+{
+    $zip = new ZipArchive;
+    if ($zip->open($filename) === false) {
+        throw new HttpBadRequestException($req, 'zip does not seem valid');
+    }
+
+    $composerJson = $composerJson = $zip->getFromName('composer.json');
+    if ($composerJson === false) {
+        throw new HttpBadRequestException($req, 'No composer.json file in your zip');
+    }
+
+    $composerJson = json_decode($composerJson, true);
+    $zip->close();
+    if (empty($composerJson['version'])) {
+        throw new HttpBadRequestException($req, 'composer.json does not contain a version');
+    }
+
+    return (string)$composerJson['version'];
 }
 
 # Inject functions and variables to container
@@ -84,9 +119,7 @@ $errHandler = function (Request $req, Throwable $except) use ($app, $debug) {
     $resp = $app->getResponseFactory()->createResponse();
     $resp->getBody()->write($payload);
 
-    return $resp
-        ->withHeader('Content-Type', 'application/json')
-        ->withStatus($code);
+    return $resp->withHeader('Content-Type', 'application/json')->withStatus($code);
 };
 $errorMiddleware = $app->addErrorMiddleware($debug, $debug, $debug);
 if ($debug === false) {
@@ -98,18 +131,20 @@ if ($debug === false) {
 // Satis Commands
 $app->post('/init', function (Request $req, Response $resp) {
     $body = $req->getParsedBody();
-    if (file_exists($this->get('satisConfig'))) {
+
+    if (empty($body['name']) || empty($body['homepage'])) {
+        $errMsg = "You must send a 'name' and a 'homepage'";
+        throw new HttpBadRequestException($req, $errMsg);
+    }
+
+    $fs = new Filesystem();
+    if ($fs->exists($this->get('satisConfig')) === true) {
         if (empty($body['force'])) {
             $errMsg = 'Already initialized, you must set force to true to overwrite';
             throw new HttpBadRequestException($req, $errMsg);
         }
 
-        unlink($this->get('satisConfig'));
-    }
-
-    if (empty($body['name']) || empty($body['homepage'])) {
-        $errMsg = "You must send a 'name' and a 'homepage'";
-        throw new HttpBadRequestException($req, $errMsg);
+        $fs->remove($this->get('satisConfig'));
     }
 
     return executeSatis($req, $resp, [
@@ -122,12 +157,36 @@ $app->post('/init', function (Request $req, Response $resp) {
     ]);
 });
 
-$pkgMatch = '{package:[a-z0-9\-]+/[a-z0-9\-]+}';
-
 $app->post("/{$pkgMatch}", function (Request $req, Response $resp, array $args) {
+    $files = $req->getUploadedFiles();
+
+    // user uploaded a zip file
+    if (!empty($files['package'])) {
+        if ($files['package']->getError() !== UPLOAD_ERR_OK) {
+            throw new HttpBadRequestException($req, 'Error uploading file');
+        }
+
+        $fs = new Filesystem;
+
+        $destDir = $this->get('artifactsDir') . '/' . $args['package'];
+
+        // Create a temporary file to get the version
+        $tmpfname = tempnam(sys_get_temp_dir(), 'satis');
+        $fs->dumpFile($tmpfname, $files['package']->getStream());
+        $filename = str_replace('/', '-', $args['package']) . '-' . getPackageVersion($req, $tmpfname) . '.zip';
+        $fs->mkdir($destDir);
+        // Move the file to the right dest
+        $files['package']->moveTo($destDir . '/' . $filename);
+
+        $resp->getBody()->write(json_encode(['message' => "File '$filename' written"]));
+
+        return $resp->withHeader('Content-Type', 'application/json');
+    }
+
     $body = $req->getParsedBody();
+    // it's not an uploaded file
     if (empty($body['url'])) {
-        $errMsg = "You must set a 'url' in the body";
+        $errMsg = "You must set a 'url' in the body or upload a file named 'package'";
         throw new HttpBadRequestException($req, $errMsg);
     }
 
@@ -160,7 +219,8 @@ $app->get("/build/{$pkgMatch}", function (Request $req, Response $resp, array $a
 });
 
 $app->delete("/{$pkgMatch}", function (Request $req, Response $resp, array $args) {
-    if (!file_exists($this->get('satisConfig'))) {
+    $fs = new Filesystem();
+    if ($fs->exists($this->get('satisConfig')) === false) {
         throw new HttpNotFoundException($req);
     }
     $deleted = false;
@@ -180,7 +240,7 @@ $app->delete("/{$pkgMatch}", function (Request $req, Response $resp, array $args
         );
     }
 
-    file_put_contents($this->get('satisConfig'), json_encode($conf, JSON_PRETTY_PRINT));
+    $fs->dumpFile($this->get('satisConfig'), json_encode($conf, JSON_PRETTY_PRINT));
     $resp->getBody()->write(json_encode(['message' => 'Package deleted']));
 
     return $resp->withHeader('Content-Type', 'application/json');
@@ -191,6 +251,7 @@ $app->delete("/{$pkgMatch}", function (Request $req, Response $resp, array $args
 $app->get('/index.html', 'getFile');
 $app->get('/packages.json', 'getFile');
 $app->get('/include/{filename:[0-9a-zA-Z\$]+}.json', 'getFile');
+$app->get($container->get('artifactsDir') . '/{filename:[a-z0-9\-]+/[a-z0-9\-]+/[a-z0-9\-.]+}.zip', 'getFile');
 // /static statis files
 
 $app->run();

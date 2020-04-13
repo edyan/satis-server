@@ -1,11 +1,5 @@
 <?php
-// Move variable $this->get('satisConfig') to container
-// Move default satis cmd to container
-// Move debug to container
-// Debug commands
 // Get github credential
-// ssh keyscan yes by default
-// create a method delete
 
 declare(strict_types=1);
 

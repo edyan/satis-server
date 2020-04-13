@@ -32,7 +32,7 @@ local artifacts :
     "repositories": [
         {
             "type": "artifact",
-            "url": "/build/packages"
+            "url": "packages"
         }
     ],
     "require-all": true

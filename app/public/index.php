@@ -32,7 +32,7 @@ $app = Slim\Factory\AppFactory::create();
 # A few methods
 function getFile(Request $req, Response $resp)
 {
-    $filename = $req->getUri()->getPath();
+    $filename = urldecode($req->getUri()->getPath());
     if (strpos($filename, '/build/') === false) {
         $filename = '/build/' . $filename;
     }
@@ -60,6 +60,7 @@ function executeSatis(Request $req, Response $resp, array $cmd)
     file_put_contents('php://stdout', 'Run command: ' . implode(' ', $cmd));
 
     $process = new Process($cmd);
+    $process->setWorkingDirectory('/build');
     $process->run();
 
     if (!$process->isSuccessful()) {
@@ -250,7 +251,7 @@ $app->delete("/{$pkgMatch}", function (Request $req, Response $resp, array $args
 // static statis files
 $app->get('/index.html', 'getFile');
 $app->get('/packages.json', 'getFile');
-$app->get('/include/{filename:[0-9a-zA-Z\$]+}.json', 'getFile');
+$app->get('/include/{filename:[0-9a-zA-Z\$%]+}.json', 'getFile');
 $app->get($container->get('artifactsDir') . '/{filename:[a-z0-9\-]+/[a-z0-9\-]+/[a-z0-9\-.]+}.zip', 'getFile');
 // /static statis files
 

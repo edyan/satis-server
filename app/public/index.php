@@ -32,11 +32,7 @@ $app = Slim\Factory\AppFactory::create();
 # A few methods
 function getFile(Request $req, Response $resp)
 {
-    $filename = urldecode($req->getUri()->getPath());
-    if (strpos($filename, '/build/') === false) {
-        $filename = '/build/' . $filename;
-    }
-
+    $filename = '/build/' . urldecode($req->getUri()->getPath());
     $ext = pathinfo($filename, PATHINFO_EXTENSION);
     switch ($ext) {
         case 'json':
@@ -252,7 +248,9 @@ $app->delete("/{$pkgMatch}", function (Request $req, Response $resp, array $args
 $app->get('/index.html', 'getFile');
 $app->get('/packages.json', 'getFile');
 $app->get('/include/{filename:[0-9a-zA-Z\$%]+}.json', 'getFile');
-$app->get($container->get('artifactsDir') . '/{filename:[a-z0-9\-]+/[a-z0-9\-]+/[a-z0-9\-.]+}.zip', 'getFile');
+$artifactsUrl = '/' . $container->get('artifactsDir');
+$artifactsUrl.= '/{filename:[a-z0-9\-]+/[a-z0-9\-]+/[a-z0-9\-.]+}.zip';
+$app->get($artifactsUrl, 'getFile');
 // /static statis files
 
 $app->run();

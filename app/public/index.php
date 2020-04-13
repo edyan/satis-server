@@ -1,5 +1,5 @@
 <?php
-// Move variable $filename to container
+// Move variable $this->get('satisConfig') to container
 // Move default satis cmd to container
 // Move debug to container
 // Debug commands
@@ -31,18 +31,49 @@ Slim\Factory\AppFactory::setContainer($container);
 $app = Slim\Factory\AppFactory::create();
 # /Create App
 
-# Inject functions and variables to container
-$container->set('getFile', function (Request $req, Response $res): Response {
+# A few methods
+function getFile(Request $req, Response $resp)
+{
     $filename = '/build/' . $req->getUri()->getPath();
     $ext = pathinfo($filename, PATHINFO_EXTENSION);
     $contentType = $ext === 'json' ? 'application/json' : 'text/html';
     if (!file_exists($filename)) {
        throw new HttpNotFoundException($req);
     }
-    $res->getBody()->write(file_get_contents($filename));
+    $resp->getBody()->write(file_get_contents($filename));
 
-    return $res->withHeader('Content-Type', $contentType);
-});
+    return $resp->withHeader('Content-Type', $contentType);
+}
+
+function executeSatis(Request $req, Response $resp, array $cmd)
+{
+    $cmd = array_merge(['/satis/bin/satis','--no-ansi', '--no-interaction'], $cmd);
+    file_put_contents('php://stdout', 'Run command: ' . implode(' ', $cmd));
+
+    $process = new Process($cmd);
+    $process->run();
+
+    if (!$process->isSuccessful()) {
+        throw new HttpBadRequestException($req, cleanOutput($process->getErrorOutput()));
+    }
+
+    $resp->getBody()
+        ->write(json_encode(['message' => cleanOutput($process->getOutput())]));
+
+    return $resp->withHeader('Content-Type', 'application/json');
+}
+
+function cleanOutput(string $output)
+{
+    $output = trim($output);
+    $output = preg_replace('/\s\s+/', '. ', $output); // Extra spaces
+    $output = str_replace("\n", '', $output); // New lines.
+
+    return $output;
+}
+
+# Inject functions and variables to container
+$container->set('satisConfig', '/build/satis.json');
 
 # Manage Errors
 $app->addRoutingMiddleware();
@@ -56,58 +87,42 @@ $customErrHandler = function (Request $req, Throwable $except) use ($app, $debug
 
     $payload = json_encode(['error' => $message], JSON_UNESCAPED_UNICODE);
 
-    $res = $app->getResponseFactory()->createResponse();
-    $res->getBody()->write($payload);
+    $resp = $app->getResponseFactory()->createResponse();
+    $resp->getBody()->write($payload);
 
-    return $res
+    return $resp
         ->withHeader('Content-Type', 'application/json')
         ->withStatus($code);
 };
 $errorMiddleware = $app->addErrorMiddleware($debug, $debug, $debug);
-$errorMiddleware->setDefaultErrorHandler($customErrHandler);
+if ($debug === false) {
+    $errorMiddleware->setDefaultErrorHandler($customErrHandler);
+}
 # /Manage Errors
 
 # Routes
 // Satis Commands
-$app->post('/build', function (Request $req, Response $res) {
-    $body = $req->getParsedBody();
-    if (empty($body['package']) || !is_array($body['package'])) {
-        $errMsg = "You must set at least one value to 'package[]'";
-        throw new HttpBadRequestException($req, $errMsg);
-    }
+$app->post(
+    '/build/{package:[a-z0-9\-]+/[a-z0-9\-]+}',
+    function (Request $req, Response $resp, array $args) {
 
-    $filename = '/build/satis.json';
-    $process = new Process([
-        '/satis/bin/satis',
+    return executeSatis($req, $resp, [
         'build',
-        '--no-ansi',
-        '--no-interaction',
-        '--no-html-output',
-        $filename,
+        $this->get('satisConfig'),
         '/build',
-        implode(' ', $body['package']),
+        $args['package'],
     ]);
-    $process->run();
-
-    $output = trim($process->getOutput());
-    if (!$process->isSuccessful()) {
-        throw new HttpBadRequestException($req, $output);
-    }
-    $res->getBody()->write(json_encode(['message' => $output]));
-
-    return $res->withHeader('Content-Type', 'application/json');
 });
 
-$app->post('/init', function (Request $req, Response $res) {
-    $filename = '/build/satis.json';
+$app->post('/init', function (Request $req, Response $resp) {
     $body = $req->getParsedBody();
-    if (file_exists($filename)) {
+    if (file_exists($this->get('satisConfig'))) {
         if (empty($body['force'])) {
-            $errMsg = 'Already initialized, you must set force to true to owerwrite';
+            $errMsg = 'Already initialized, you must set force to true to overwrite';
             throw new HttpBadRequestException($req, $errMsg);
         }
 
-        unlink($filename);
+        unlink($this->get('satisConfig'));
     }
 
     if (empty($body['name']) || empty($body['homepage'])) {
@@ -115,67 +130,38 @@ $app->post('/init', function (Request $req, Response $res) {
         throw new HttpBadRequestException($req, $errMsg);
     }
 
-    $process = new Process([
-        '/satis/bin/satis',
+    return executeSatis($req, $resp, [
         'init',
-        '--no-ansi',
-        '--no-interaction',
         '--name',
         $body['name'],
         '--homepage',
         $body['homepage'],
-        $filename
+        $this->get('satisConfig')
     ]);
-    $process->run();
-
-    $output = trim($process->getOutput());
-    if (!$process->isSuccessful()) {
-        throw new HttpBadRequestException($req, $output);
-    }
-    $res->getBody()->write(json_encode(['message' => $output]));
-
-    return $res->withHeader('Content-Type', 'application/json');
 });
 
-$app->post('/{package:[a-z/]+}', function (Request $req, Response $res, array $args) {
-    $filename = '/build/satis.json';
+$app->post('/{package:[a-z0-9\-]+/[a-z0-9\-]+}', function (Request $req, Response $resp, array $args) {
     $body = $req->getParsedBody();
     if (empty($body['url'])) {
         $errMsg = "You must set a 'url' in the body";
         throw new HttpBadRequestException($req, $errMsg);
     }
 
-    // Run Satis
-    $process = new Process([
-        '/satis/bin/satis',
+    return executeSatis($req, $resp, [
         'add',
-        '--no-ansi',
-        '--no-interaction',
         '--name',
         $args['package'],
         $body['url'],
-        $filename
+        $this->get('satisConfig')
     ]);
-    $process->run();
-
-    // Analysis the url to scan it
-
-    $output = trim($process->getOutput());
-    if (!$process->isSuccessful()) {
-        throw new HttpBadRequestException($req, $output);
-    }
-    $res->getBody()->write(json_encode(['message' => $output]));
-
-    return $res->withHeader('Content-Type', 'application/json');
 });
 
-$app->delete('/{package:[a-z/]+}', function (Request $req, Response $res, array $args) {
-    $filename = '/build/satis.json';
-    if (!file_exists($filename)) {
+$app->delete('/{package:[a-z0-9\-]+/[a-z0-9\-]+}', function (Request $req, Response $resp, array $args) {
+    if (!file_exists($this->get('satisConfig'))) {
         throw new HttpNotFoundException($req);
     }
     $deleted = false;
-    $conf = json_decode(file_get_contents($filename), true);
+    $conf = json_decode(file_get_contents($this->get('satisConfig')), true);
     foreach ($conf['repositories'] as $key => $val) {
         if ($val['name'] === $args['package']) {
             unset($conf['repositories'][$key]);
@@ -191,18 +177,18 @@ $app->delete('/{package:[a-z/]+}', function (Request $req, Response $res, array 
         );
     }
 
-    file_put_contents($filename, json_encode($conf, JSON_PRETTY_PRINT));
-    $res->getBody()->write(json_encode(['message' => 'Package deleted']));
+    file_put_contents($this->get('satisConfig'), json_encode($conf, JSON_PRETTY_PRINT));
+    $resp->getBody()->write(json_encode(['message' => 'Package deleted']));
 
-    return $res->withHeader('Content-Type', 'application/json');
+    return $resp->withHeader('Content-Type', 'application/json');
 });
 
 // /Satis Commands
 
 // static statis files
-$app->get('/index.html', $container->get('getFile'));
-$app->get('/packages.json', $getFile);
-$app->get('/include/{filename:[0-9a-zA-Z\$]+}.json', $getFile);
+$app->get('/index.html', 'getFile');
+$app->get('/packages.json', 'getFile');
+$app->get('/include/{filename:[0-9a-zA-Z\$]+}.json', 'getFile');
 // /static statis files
 
 $app->run();

@@ -9,6 +9,9 @@ RUN         mkdir /composer && \
             chown www-data:www-data /build /composer
 
 USER        www-data
+
+RUN         print "Host *\nStrictHostKeyChecking no" > ~/.ssh_config && cat .ssh_config && exit 1
+
 WORKDIR     /app
 RUN         composer install \
                 --no-dev \

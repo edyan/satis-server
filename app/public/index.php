@@ -18,13 +18,31 @@ use Symfony\Component\Process\Process;
 
 require __DIR__ . '/../vendor/autoload.php';
 
-# Manage conf
+# Manage container and conf
+$container = new DI\Container();
+
 $dotenv = Dotenv\Dotenv::createImmutable(__DIR__ . '/../');
 $dotenv->load();
 $debug = (bool)getenv('DEBUG') ?: false;
 # /Manage conf
 
-$app = \Slim\Factory\AppFactory::create();
+# Create App
+Slim\Factory\AppFactory::setContainer($container);
+$app = Slim\Factory\AppFactory::create();
+# /Create App
+
+# Inject functions and variables to container
+$container->set('getFile', function (Request $req, Response $res): Response {
+    $filename = '/build/' . $req->getUri()->getPath();
+    $ext = pathinfo($filename, PATHINFO_EXTENSION);
+    $contentType = $ext === 'json' ? 'application/json' : 'text/html';
+    if (!file_exists($filename)) {
+       throw new HttpNotFoundException($req);
+    }
+    $res->getBody()->write(file_get_contents($filename));
+
+    return $res->withHeader('Content-Type', $contentType);
+});
 
 # Manage Errors
 $app->addRoutingMiddleware();
@@ -182,18 +200,7 @@ $app->delete('/{package:[a-z/]+}', function (Request $req, Response $res, array 
 // /Satis Commands
 
 // static statis files
-$getFile = function (Request $req, Response $res): Response {
-    $filename = '/build/' . $req->getUri()->getPath();
-    $ext = pathinfo($filename, PATHINFO_EXTENSION);
-    $contentType = $ext === 'json' ? 'application/json' : 'text/html';
-    if (!file_exists($filename)) {
-        throw new HttpNotFoundException($req);
-    }
-    $res->getBody()->write(file_get_contents($filename));
-
-    return $res->withHeader('Content-Type', $contentType);
-};
-$app->get('/index.html', $getFile);
+$app->get('/index.html', $container->get('getFile'));
 $app->get('/packages.json', $getFile);
 $app->get('/include/{filename:[0-9a-zA-Z\$]+}.json', $getFile);
 // /static statis files

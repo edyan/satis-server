@@ -67,7 +67,7 @@ function cleanOutput(string $output)
 {
     $output = trim($output);
     $output = preg_replace('/\s\s+/', '. ', $output); // Extra spaces
-    $output = str_replace("\n", '', $output); // New lines.
+    $output = str_replace("\n", '. ', $output); // New lines.
 
     return $output;
 }
@@ -102,9 +102,8 @@ if ($debug === false) {
 
 # Routes
 // Satis Commands
-$app->post(
-    '/build/{package:[a-z0-9\-]+/[a-z0-9\-]+}',
-    function (Request $req, Response $resp, array $args) {
+$buildUri = '/build/{package:[a-z0-9\-]+/[a-z0-9\-]+}';
+$app->get($buildUri, function (Request $req, Response $resp, array $args) {
 
     return executeSatis($req, $resp, [
         'build',

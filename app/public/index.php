@@ -71,7 +71,7 @@ $container->set('satisConfig', '/build/satis.json');
 
 # Manage Errors
 $app->addRoutingMiddleware();
-$customErrHandler = function (Request $req, Throwable $except) use ($app, $debug) {
+$errHandler = function (Request $req, Throwable $except) use ($app, $debug) {
     $code = $except->getCode();
     $message = $except->getMessage();
     if (empty($code)) {
@@ -90,23 +90,12 @@ $customErrHandler = function (Request $req, Throwable $except) use ($app, $debug
 };
 $errorMiddleware = $app->addErrorMiddleware($debug, $debug, $debug);
 if ($debug === false) {
-    $errorMiddleware->setDefaultErrorHandler($customErrHandler);
+    $errorMiddleware->setDefaultErrorHandler($errHandler);
 }
 # /Manage Errors
 
 # Routes
 // Satis Commands
-$buildUri = '/build/{package:[a-z0-9\-]+/[a-z0-9\-]+}';
-$app->get($buildUri, function (Request $req, Response $resp, array $args) {
-
-    return executeSatis($req, $resp, [
-        'build',
-        $this->get('satisConfig'),
-        '/build',
-        $args['package'],
-    ]);
-});
-
 $app->post('/init', function (Request $req, Response $resp) {
     $body = $req->getParsedBody();
     if (file_exists($this->get('satisConfig'))) {
@@ -133,7 +122,9 @@ $app->post('/init', function (Request $req, Response $resp) {
     ]);
 });
 
-$app->post('/{package:[a-z0-9\-]+/[a-z0-9\-]+}', function (Request $req, Response $resp, array $args) {
+$pkgMatch = '{package:[a-z0-9\-]+/[a-z0-9\-]+}';
+
+$app->post("/{$pkgMatch}", function (Request $req, Response $resp, array $args) {
     $body = $req->getParsedBody();
     if (empty($body['url'])) {
         $errMsg = "You must set a 'url' in the body";
@@ -149,7 +140,26 @@ $app->post('/{package:[a-z0-9\-]+/[a-z0-9\-]+}', function (Request $req, Respons
     ]);
 });
 
-$app->delete('/{package:[a-z0-9\-]+/[a-z0-9\-]+}', function (Request $req, Response $resp, array $args) {
+$app->get("/build", function (Request $req, Response $resp) {
+
+    return executeSatis($req, $resp, [
+        'build',
+        $this->get('satisConfig'),
+        '/build',
+    ]);
+});
+
+$app->get("/build/{$pkgMatch}", function (Request $req, Response $resp, array $args) {
+
+    return executeSatis($req, $resp, [
+        'build',
+        $this->get('satisConfig'),
+        '/build',
+        $args['package'],
+    ]);
+});
+
+$app->delete("/{$pkgMatch}", function (Request $req, Response $resp, array $args) {
     if (!file_exists($this->get('satisConfig'))) {
         throw new HttpNotFoundException($req);
     }
@@ -175,7 +185,6 @@ $app->delete('/{package:[a-z0-9\-]+/[a-z0-9\-]+}', function (Request $req, Respo
 
     return $resp->withHeader('Content-Type', 'application/json');
 });
-
 // /Satis Commands
 
 // static statis files

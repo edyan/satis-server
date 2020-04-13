@@ -6,10 +6,9 @@ COPY        docker-entrypoint.sh /docker-entrypoint.sh
 
 RUN         chmod 755 /docker-entrypoint.sh /usr/bin/composer
 
-RUN         apk add --no-cache libzip libzip-dev
-RUN         docker-php-ext-configure zip --enable-zip
-RUN         docker-php-ext-install zip
-RUN         apk del libzip-dev
+RUN         apk add --no-cache libzip libzip-dev && \
+            docker-php-ext-install zip && \
+            apk del libzip-dev
 
 RUN         mkdir /composer && \
             chown www-data:www-data /build /composer

@@ -10,7 +10,7 @@ RUN         mkdir /composer && \
 
 USER        www-data
 
-RUN         printf "Host *\nStrictHostKeyChecking no" > ~/.ssh_config && cat .ssh_config && exit 1
+RUN         printf "Host *\nStrictHostKeyChecking no" > $HOME/.ssh/config && cat $HOME/.ssh/config && exit 1
 
 WORKDIR     /app
 RUN         composer install \

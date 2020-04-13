@@ -165,7 +165,7 @@ $app->post("/{$pkgMatch}", function (Request $req, Response $resp, array $args) 
 
         $fs = new Filesystem;
 
-        $destDir = $this->get('artifactsDir') . '/' . $args['package'];
+        $destDir = '/build/' . $this->get('artifactsDir') . '/' . $args['package'];
 
         // Create a temporary file to get the version
         $tmpfname = tempnam(sys_get_temp_dir(), 'satis');

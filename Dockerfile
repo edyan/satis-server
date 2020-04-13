@@ -5,7 +5,11 @@ COPY        --from=composer:1 /usr/bin/composer /usr/bin/composer
 COPY        docker-entrypoint.sh /docker-entrypoint.sh
 
 RUN         chmod 755 /docker-entrypoint.sh /usr/bin/composer
-RUN         apk add --no-cache php7-zip
+
+RUN         apk add --no-cache libzip-dev && \
+            docker-php-ext-configure zip --with-libzip=/usr/include && \
+            docker-php-ext-install zip
+
 RUN         mkdir /composer && \
             chown www-data:www-data /build /composer
 

@@ -8,7 +8,8 @@ RUN         chmod 755 /docker-entrypoint.sh /usr/bin/composer
 
 RUN         apk add --no-cache libzip-dev && \
             docker-php-ext-configure zip --with-libzip=/usr/include && \
-            docker-php-ext-install zip
+            docker-php-ext-install zip && \
+            apk del libzip-dev
 
 RUN         mkdir /composer && \
             chown www-data:www-data /build /composer

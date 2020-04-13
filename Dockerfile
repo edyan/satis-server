@@ -6,7 +6,7 @@ COPY        docker-entrypoint.sh /docker-entrypoint.sh
 
 RUN         chmod 755 /docker-entrypoint.sh /usr/bin/composer
 
-RUN         apk add --no-cache libzip-dev && \
+RUN         apk add --no-cache libzip libzip-dev && \
             docker-php-ext-configure zip --with-libzip=/usr/include && \
             docker-php-ext-install zip && \
             apk del libzip-dev

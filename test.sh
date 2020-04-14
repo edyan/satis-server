@@ -14,7 +14,7 @@ cd ${DIRECTORY}
 echo ""
 echo -e "${GREEN}Testing image${NC}"
 
-echo -e "${GREEN}Entering ${DIRECTORY}/../tests/${TESTS}${NC}"
-cd ${DIRECTORY}/../tests/${TESTS}
+echo -e "${GREEN}Entering tests/${NC}"
+cd tests
 
 dgoss run -e GOSS_FILES_STRATEGY=cp ${TAG}

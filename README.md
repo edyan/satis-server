@@ -38,7 +38,7 @@ local artifacts :
     "archive": {
         "directory": "packages",
         "format": "zip",
-        "prefix-url": "https://my.satis.repo/packages"
+        "prefix-url": "https://my.satis.repo"
     },
     "require-all": true
 }

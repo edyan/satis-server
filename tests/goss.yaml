@@ -16,8 +16,6 @@ http:
     allow-insecure: false
     no-follow-redirects: false
     timeout: 500
-    headers:
-      - "Content-Type: application/json"
     body:
       - You must init satis first
   "http://localhost:8080/abc":
@@ -25,7 +23,5 @@ http:
     allow-insecure: false
     no-follow-redirects: false
     timeout: 500
-    headers:
-      - "Content-Type: application/json"
     body:
       - Not Found

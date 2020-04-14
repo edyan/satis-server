@@ -50,10 +50,10 @@ function getFile(Request $req, Response $resp)
     return $resp->withHeader('Content-Type', $contentType);
 }
 
-function executeSatis(Request $req, Response $resp, array $cmd)
+function executeSatis(Request $req, Response $resp, string $satisConf, array $cmd)
 {
     $fs = new Filesystem();
-    if ($cmd[0] !== 'init' && $fs->exists($this->get('satisConfig')) === false) {
+    if ($cmd[0] !== 'init' && $fs->exists($satisConfig) === false) {
         throw new HttpBadRequestException($req, 'You must init satis first with /init');
     }
 
@@ -149,7 +149,7 @@ $app->post('/init', function (Request $req, Response $resp) {
         $fs->remove($this->get('satisConfig'));
     }
 
-    return executeSatis($req, $resp, [
+    return executeSatis($req, $resp, $this->get('satisConfig'), [
         'init',
         '--name',
         $body['name'],
@@ -192,7 +192,7 @@ $app->post("/{$pkgMatch}", function (Request $req, Response $resp, array $args) 
         throw new HttpBadRequestException($req, $errMsg);
     }
 
-    return executeSatis($req, $resp, [
+    return executeSatis($req, $resp, $this->get('satisConfig'), [
         'add',
         '--name',
         $args['package'],
@@ -203,12 +203,17 @@ $app->post("/{$pkgMatch}", function (Request $req, Response $resp, array $args) 
 
 $app->get("/build", function (Request $req, Response $resp) {
     $satisConf = $this->get('satisConfig');
-    return executeSatis($req, $resp, ['build', $satisConf, '/build']);
+    return executeSatis($req, $resp, $satisConf, ['build', $satisConf, '/build']);
 });
 
 $app->get("/build/{$pkgMatch}", function (Request $req, Response $resp, array $args) {
     $satisConf = $this->get('satisConfig');
-    return executeSatis($req, $resp, ['build', $satisConf, '/build', $args['package']]);
+    return executeSatis($req, $resp, $satisConf, [
+        'build',
+        $satisConf,
+        '/build',
+        $args['package']
+    ]);
 });
 
 $app->delete("/{$pkgMatch}", function (Request $req, Response $resp, array $args) {

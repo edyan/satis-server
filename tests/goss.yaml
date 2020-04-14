@@ -1,0 +1,15 @@
+package:
+  php:
+    installed: true
+
+port:
+  tcp:8080:
+    listening: true
+    ip:
+    - 0.0.0.0
+
+command:
+  php -m|grep -e ^zip:
+    exit-status: 0
+    stdout: [zip]
+    stderr: []

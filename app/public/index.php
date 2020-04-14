@@ -52,6 +52,11 @@ function getFile(Request $req, Response $resp)
 
 function executeSatis(Request $req, Response $resp, array $cmd)
 {
+    $fs = new Filesystem();
+    if ($cmd[0] !== 'init' && $fs->exists($this->get('satisConfig')) === false) {
+        throw new HttpBadRequestException($req, 'You must init satis first with /init');
+    }
+
     $cmd = array_merge(['/satis/bin/satis','--no-ansi', '--no-interaction'], $cmd);
     file_put_contents('php://stdout', 'Run command: ' . implode(' ', $cmd));
 
@@ -180,8 +185,8 @@ $app->post("/{$pkgMatch}", function (Request $req, Response $resp, array $args) 
         return $resp->withHeader('Content-Type', 'application/json');
     }
 
-    $body = $req->getParsedBody();
     // it's not an uploaded file
+    $body = $req->getParsedBody();
     if (empty($body['url'])) {
         $errMsg = "You must set a 'url' in the body or upload a file named 'package'";
         throw new HttpBadRequestException($req, $errMsg);
@@ -197,29 +202,16 @@ $app->post("/{$pkgMatch}", function (Request $req, Response $resp, array $args) 
 });
 
 $app->get("/build", function (Request $req, Response $resp) {
-
-    return executeSatis($req, $resp, [
-        'build',
-        $this->get('satisConfig'),
-        '/build',
-    ]);
+    $satisConf = $this->get('satisConfig');
+    return executeSatis($req, $resp, ['build', $satisConf, '/build']);
 });
 
 $app->get("/build/{$pkgMatch}", function (Request $req, Response $resp, array $args) {
-
-    return executeSatis($req, $resp, [
-        'build',
-        $this->get('satisConfig'),
-        '/build',
-        $args['package'],
-    ]);
+    $satisConf = $this->get('satisConfig');
+    return executeSatis($req, $resp, ['build', $satisConf, '/build', $args['package']]);
 });
 
 $app->delete("/{$pkgMatch}", function (Request $req, Response $resp, array $args) {
-    $fs = new Filesystem();
-    if ($fs->exists($this->get('satisConfig')) === false) {
-        throw new HttpNotFoundException($req);
-    }
     $deleted = false;
     $conf = json_decode(file_get_contents($this->get('satisConfig')), true);
     foreach ($conf['repositories'] as $key => $val) {
@@ -231,10 +223,7 @@ $app->delete("/{$pkgMatch}", function (Request $req, Response $resp, array $args
     }
 
     if ($deleted === false) {
-        throw new HttpBadRequestException(
-            $req,
-            'No package matching ' . $args['package']
-        );
+        throw new HttpBadRequestException($req, 'No package matching ' . $args['package']);
     }
 
     $fs->dumpFile($this->get('satisConfig'), json_encode($conf, JSON_PRETTY_PRINT));

@@ -11,14 +11,14 @@ command:
     stderr: []
 
 http:
-  http://localhost/build:
-    status: 200
+  "http://localhost:8080/build":
+    status: 400
     allow-insecure: false
     no-follow-redirects: false
     timeout: 1000
     body:
       - Satis
-  http://localhost/abc:
+  "http://localhost:8080/abc":
     status: 404
     allow-insecure: false
     no-follow-redirects: false

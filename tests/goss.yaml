@@ -1,7 +1,3 @@
-package:
-  php-cli:
-    installed: true
-
 port:
   tcp:8080:
     listening: true
@@ -13,3 +9,19 @@ command:
     exit-status: 0
     stdout: [zip]
     stderr: []
+
+http:
+  http://localhost/build:
+    status: 200
+    allow-insecure: false
+    no-follow-redirects: false
+    timeout: 1000
+    body:
+      - Satis
+  http://localhost/abc:
+    status: 404
+    allow-insecure: false
+    no-follow-redirects: false
+    timeout: 0
+    body:
+      - 404 Not Found

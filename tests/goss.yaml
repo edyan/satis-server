@@ -24,4 +24,4 @@ http:
     no-follow-redirects: false
     timeout: 500
     body:
-      - Not Found
+      - Not found

@@ -13,4 +13,4 @@ script:
   # Don't do that else it's too slow : - sudo apt-get upgrade
   - sudo apt-get install -y --no-install-recommends curl
   - curl -fsSL https://goss.rocks/install | sudo sh
-  - scripts/test.sh
+  - ./test.sh

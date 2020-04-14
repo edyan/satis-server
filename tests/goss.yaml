@@ -15,13 +15,17 @@ http:
     status: 400
     allow-insecure: false
     no-follow-redirects: false
-    timeout: 1000
+    timeout: 500
+    headers:
+      - application/json
     body:
-      - Satis
+      - You must init satis first
   "http://localhost:8080/abc":
     status: 404
     allow-insecure: false
     no-follow-redirects: false
-    timeout: 0
+    timeout: 500
+    headers:
+      - application/json
     body:
-      - 404 Not Found
+      - Not Found

@@ -53,7 +53,7 @@ function getFile(Request $req, Response $resp)
 function executeSatis(Request $req, Response $resp, string $satisConf, array $cmd)
 {
     $fs = new Filesystem();
-    if ($cmd[0] !== 'init' && $fs->exists($satisConfig) === false) {
+    if ($cmd[0] !== 'init' && $fs->exists($satisConf) === false) {
         throw new HttpBadRequestException($req, 'You must init satis first with /init');
     }
 

@@ -32,14 +32,13 @@ local artifacts :
     "repositories": [
         {
             "type": "artifact",
-            "url": "packages",
-            "url-prefix": "https://my.satis.repo/packages"
+            "url": "packages"
         }
     ],
     "archive": {
         "directory": "packages",
         "format": "zip",
-        "prefix-url": "https://satis.recette-dock.argusauto.com"
+        "prefix-url": "https://my.satis.repo/packages"
     },
     "require-all": true
 }

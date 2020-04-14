@@ -245,6 +245,7 @@ $app->delete("/{$pkgMatch}", function (Request $req, Response $resp, array $args
 // /Satis Commands
 
 // static statis files
+$app->redirect('/', '/index.html', 301);
 $app->get('/index.html', 'getFile');
 $app->get('/packages.json', 'getFile');
 $app->get('/include/{filename:[0-9a-zA-Z\$%]+}.json', 'getFile');

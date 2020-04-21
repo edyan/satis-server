@@ -92,6 +92,9 @@ curl http://localhost:8080/build
 There is also a `GET /build/{package/name}` to refresh a single package. 
 That doesn't work with artifacts. 
 
+You can also do a `GET /build?url=https://github.com.....` when you use the 
+`github`, `gitlab` or `bitbucket` driver. 
+
 ### Delete a package
 Finally you can also delete a package with `DELETE /{package/name}`
 

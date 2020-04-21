@@ -203,7 +203,15 @@ $app->post("/{$pkgMatch}", function (Request $req, Response $resp, array $args) 
 
 $app->get("/build", function (Request $req, Response $resp) {
     $satisConf = $this->get('satisConfig');
-    return executeSatis($req, $resp, $satisConf, ['build', $satisConf, '/build']);
+
+    $cmd = ['build'];
+    if (array_key_exists('url', $req->getQueryParams())) {
+        $url = filter_var($req->getQueryParams()['url'], FILTER_VALIDATE_URL);
+        $cmd = array_merge($cmd, ['--repository-url', $url]);
+    }
+    $cmd = array_merge($cmd, [$satisConf, '/build']);
+
+    return executeSatis($req, $resp, $satisConf, $cmd);
 });
 
 $app->get("/build/{$pkgMatch}", function (Request $req, Response $resp, array $args) {

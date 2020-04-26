@@ -1,0 +1,17 @@
+--- vendor/composer/composer/src/Composer/Repository/Vcs/GitLabDriver.php.orig	2020-04-26 17:51:03.000000000 +0200
++++ vendor/composer/composer/src/Composer/Repository/Vcs/GitLabDriver.php	2020-04-26 17:51:05.000000000 +0200
+@@ -172,6 +172,15 @@
+      */
+     public function getRepositoryUrl()
+     {
++        if (array_key_exists('clone-protocol', $this->repoConfig)) {
++            if ($this->repoConfig['clone-protocol'] === 'https') {
++                return $this->project['http_url_to_repo'];
++            }
++            if ($this->repoConfig['clone-protocol'] === 'ssh') {
++                return $this->project['ssh_url_to_repo'];
++            }
++        }
++
+         return $this->isPrivate ? $this->project['ssh_url_to_repo'] : $this->project['http_url_to_repo'];
+     }

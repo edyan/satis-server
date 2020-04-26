@@ -16,6 +16,13 @@ RUN         echo post_max_size = 32M > /usr/local/etc/php/conf.d/satis-server.in
 RUN         mkdir /composer && \
             chown www-data:www-data /build /composer
 
+# Apply Patch
+COPY        force-clone-protocol.patch /tmp/force-clone-protocol.patch
+RUN         apk add patch && \
+            cd /satis && \
+            patch -p0 < /tmp/force-clone-protocol.patch && \
+            apk del patch
+
 USER        www-data
 
 RUN         mkdir $HOME/.ssh && \

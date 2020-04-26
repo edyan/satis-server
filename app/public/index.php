@@ -20,6 +20,7 @@ $dotenv = Dotenv\Dotenv::createImmutable(__DIR__ . '/../');
 $dotenv->load();
 $debug = (bool)getenv('DEBUG') ?: false;
 $container->set('artifactsDir', getenv('ARTIFACTS_DIR'));
+$container->set('distDir', getenv('DIST_DIR'));
 
 $pkgMatch = '{package:[a-z0-9\-]+/[a-z0-9\-]+}';
 # /Manage conf
@@ -58,7 +59,9 @@ function executeSatis(Request $req, Response $resp, string $satisConf, array $cm
     }
 
     $cmd = array_merge(['/satis/bin/satis','--no-ansi', '--no-interaction'], $cmd);
-    file_put_contents('php://stdout', 'Run command: ' . implode(' ', $cmd));
+
+    $logMsg = '[' . date('D M d H:i:s Y') . '] Command: ' . implode(' ', $cmd);
+    file_put_contents('php://stdout', PHP_EOL . $logMsg . PHP_EOL);
 
     $process = new Process($cmd);
     $process->setWorkingDirectory('/build');
@@ -251,9 +254,9 @@ $app->redirect('/', '/index.html', 301);
 $app->get('/index.html', 'getFile');
 $app->get('/packages.json', 'getFile');
 $app->get('/include/{filename:[0-9a-zA-Z\$%]+}.json', 'getFile');
-$artifactsUrl = '/' . $container->get('artifactsDir');
-$artifactsUrl.= '/{filename:[a-z0-9\-]+/[a-z0-9\-]+/[a-z0-9\-.]+}.zip';
-$app->get($artifactsUrl, 'getFile');
+$distDir = '/' . $container->get('distDir');
+$distDir.= '/{filename:[a-z0-9\-]+/[a-z0-9\-]+/[a-z0-9\-.]+}.zip';
+$app->get($distDir, 'getFile');
 // /static statis files
 
 $app->run();

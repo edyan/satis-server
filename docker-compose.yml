@@ -1,0 +1,20 @@
+---
+
+version: "3.7"
+
+services:
+  satis:
+    build: .
+    environment:
+      DEBUG: "1"
+    volumes:
+      - "./app:/app"
+      - "./tmp/build:/build"
+      - "./tmp/composer:/composer"
+      - "./tmp/home/www-data/.gitconfig:/home/www-data/.gitconfig"
+      - "./tmp/home/www-data/.git-credentials:/home/www-data/.git-credentials"
+      - "./tmp/satis/vendor:/satis/vendor"
+    ports:
+      - "8080:8080"
+  php:
+    image: "edyan/php:7.2"

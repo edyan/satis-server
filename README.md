@@ -106,3 +106,29 @@ curl -XDELETE http://localhost:8080/edyan/neuralyzer
 Satis provides 2 endpoints : 
 - `/index.html` (then http://localhost:8080/index.html)
 - `/packages.json` (then http://localhost:8080/packages.json)
+
+## Develop
+### Start Server
+```bash
+docker-compose up --build --remove-orphans --force-recreate
+```
+
+### Test satis
+```bash
+docker-compose exec php bash
+# Download composer
+php -r "copy('https://getcomposer.org/download/1.10.5/composer.phar', '/usr/local/bin/composer');"
+chmod +x /usr/local/bin/composer
+# Create an App
+mkdir /app && cd /app
+composer init -n
+composer config repositories.satis composer http://satis:8080
+composer config secure-http false
+# Set your credentials if required
+composer config --global gitlab-domains gitlab.mydomain.com
+composer config --global gitlab-token."gitlab.mydomain.com" AbcDef_98939
+# Search your package
+composer search mycompany
+# Install
+composer require mycompany/package
+```

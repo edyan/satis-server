@@ -185,7 +185,6 @@ $app->post("/{$pkgMatch}", function (Request $req, Response $resp, array $args) 
         $filename = $slugify->slugify($args['package'] . '-' . getPackageVersion($req, $tmpfname) . '.zip');
 
         // Move the file to the right dest
-        $files['package']->moveTo($destDir . '/' . $filename);
         try {
             $files['package']->moveTo($destDir . '/' . $filename);
         } catch (\Exception $e) {

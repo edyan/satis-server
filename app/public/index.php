@@ -174,14 +174,26 @@ $app->post("/{$pkgMatch}", function (Request $req, Response $resp, array $args) 
         $fs = new Filesystem;
 
         $destDir = '/build/' . $this->get('artifactsDir') . '/' . $args['package'];
+        $fs->mkdir($destDir);
 
         // Create a temporary file to get the version
         $tmpfname = tempnam(sys_get_temp_dir(), 'satis');
         $fs->dumpFile($tmpfname, $files['package']->getStream());
-        $filename = str_replace('/', '-', $args['package']) . '-' . getPackageVersion($req, $tmpfname) . '.zip';
-        $fs->mkdir($destDir);
+
+        // slugify
+        $slugify = new \Cocur\Slugify\Slugify();
+        $filename = $slugify->slugify($args['package']) . '-' . getPackageVersion($req, $tmpfname) . '.zip');
+
+
         // Move the file to the right dest
         $files['package']->moveTo($destDir . '/' . $filename);
+        try {
+            $files['package']->moveTo($destDir . '/' . $filename);
+        } catch (\Exception $e) {
+            throw new \RuntimeException(
+                "Can't move file to $destDir/$filename - Message : " . $e->getMessage()
+            );
+        }
 
         $resp->getBody()->write(json_encode(['message' => "File '$filename' written"]));
 

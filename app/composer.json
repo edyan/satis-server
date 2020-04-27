@@ -8,7 +8,8 @@
         "vlucas/phpdotenv": "^4.1",
         "symfony/process": "^5.0",
         "php-di/php-di": "^6.1",
-        "symfony/filesystem": "^5.0"
+        "symfony/filesystem": "^5.0",
+        "cocur/slugify": "^4.0"
     },
     "license": "Apache2",
     "authors": [

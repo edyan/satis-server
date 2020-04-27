@@ -55,6 +55,6 @@ LABEL       maintainer="Emmanuel Dyan <emmanueldyan@gmail.com>" \
             org.label-schema.vendor="edyan" \
             org.label-schema.docker.cmd="docker run -d --rm ${DOCKER_TAG}"
 
-
+ENV         PHP_CLI_SERVER_WORKERS 4
 ENTRYPOINT  ["/docker-entrypoint.sh"]
 CMD         ["php", "-S", "0.0.0.0:8080", "-t", "/app/public", "/app/public/index.php"]

@@ -1,6 +1,5 @@
 FROM        composer/satis
 
-ADD         --chown=www-data app /app
 COPY        --from=composer:1 /usr/bin/composer /usr/bin/composer
 COPY        docker-entrypoint.sh /docker-entrypoint.sh
 
@@ -23,6 +22,7 @@ RUN         apk add patch && \
             patch -p0 < /tmp/force-clone-protocol.patch && \
             apk del patch
 
+ADD         --chown=www-data app /app
 USER        www-data
 
 RUN         mkdir $HOME/.ssh && \

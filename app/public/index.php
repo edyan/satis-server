@@ -182,7 +182,7 @@ $app->post("/{$pkgMatch}", function (Request $req, Response $resp, array $args) 
 
         // slugify
         $slugify = new \Cocur\Slugify\Slugify();
-        $filename = $slugify->slugify($args['package']) . '-' . getPackageVersion($req, $tmpfname) . '.zip');
+        $filename = $slugify->slugify($args['package']) . '-' . getPackageVersion($req, $tmpfname) . '.zip';
 
 
         // Move the file to the right dest

@@ -187,6 +187,11 @@ $app->post("/{$pkgMatch}", function (Request $req, Response $resp, array $args) 
         // Move the file to the right dest
         try {
             $files['package']->moveTo($destDir . '/' . $filename);
+            // Clean the old package if we have one
+            $currentPackage = '/build/' . $this->get('distDir') . '/' . $args['package']. '/' . $filename;
+            if (file_exists($currentPackage)) {
+                $fs->remove($currentPackage);
+            }
         } catch (\Exception $e) {
             throw new \RuntimeException(
                 "Can't move file to $destDir/$filename - Message : " . $e->getMessage()

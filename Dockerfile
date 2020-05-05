@@ -9,8 +9,9 @@ RUN         apk add --no-cache libzip libzip-dev && \
             docker-php-ext-install zip && \
             apk del libzip-dev
 
-RUN         echo post_max_size = 32M > /usr/local/etc/php/conf.d/satis-server.ini && \
-            echo upload_max_filesize = 32M >> /usr/local/etc/php/conf.d/satis-server.ini
+RUN         echo "post_max_size = 32M" > /usr/local/etc/php/conf.d/satis-server.ini && \
+            echo "upload_max_filesize = 32M" >> /usr/local/etc/php/conf.d/satis-server.ini && \
+            echo "max_execution_time = 360" >> /usr/local/etc/php/conf.d/satis-server.ini
 
 RUN         mkdir /composer && \
             chown www-data:www-data /build /composer

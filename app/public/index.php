@@ -22,7 +22,7 @@ $debug = (bool)getenv('DEBUG') ?: false;
 $container->set('artifactsDir', getenv('ARTIFACTS_DIR'));
 $container->set('distDir', getenv('DIST_DIR'));
 
-$pkgMatch = '{package:[a-z0-9\-]+/[a-z0-9\-]+}';
+$pkgMatch = '{package:[a-z0-9\-_]+/[a-z0-9\-_]+}';
 # /Manage conf
 
 # Create App
@@ -270,7 +270,7 @@ $app->get('/index.html', 'getFile');
 $app->get('/packages.json', 'getFile');
 $app->get('/include/{filename:[0-9a-zA-Z\$%]+}.json', 'getFile');
 $distDir = '/' . $container->get('distDir');
-$distDir.= '/{filename:[a-z0-9\-]+/[a-z0-9\-]+/[a-z0-9\-.]+}.zip';
+$distDir.= '/{filename:[a-z0-9\-_]+/[a-z0-9\-_]+/[a-z0-9\-_.]+}.zip';
 $app->get($distDir, 'getFile');
 // /static statis files
 

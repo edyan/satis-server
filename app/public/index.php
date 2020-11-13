@@ -270,7 +270,7 @@ $app->get('/index.html', 'getFile');
 $app->get('/packages.json', 'getFile');
 $app->get('/include/{filename:[0-9a-zA-Z\$%]+}.json', 'getFile');
 $distDir = '/' . $container->get('distDir');
-$distDir.= '/{filename:[a-z0-9\-_]+/[a-z0-9\-_]+/[a-z0-9\-_.]+}.zip';
+$distDir.= '/{filename:[a-zA-Z0-9\-_]+/[a-zA-Z0-9\-_]+/[a-zA-Z0-9\-_.]+}.zip';
 $app->get($distDir, 'getFile');
 // /static statis files
 

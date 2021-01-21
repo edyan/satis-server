@@ -1,6 +1,6 @@
 FROM        composer/satis
 
-COPY        --from=composer:1 /usr/bin/composer /usr/bin/composer
+COPY        --from=composer:2 /usr/bin/composer /usr/bin/composer
 COPY        docker-entrypoint.sh /docker-entrypoint.sh
 
 RUN         chmod 755 /docker-entrypoint.sh /usr/bin/composer

@@ -269,7 +269,7 @@ $app->redirect('/', '/index.html', 301);
 $app->get('/index.html', 'getFile');
 $app->get('/packages.json', 'getFile');
 $app->get('/include/{filename:[0-9a-zA-Z\$%]+}.json', 'getFile');
-$app->get('/p2/{filename:[a-zA-Z0-9\-_]+/[0-9a-zA-Z~\$%]+}.json', 'getFile');
+$app->get('/p2/{filename:[a-zA-Z0-9\-_]+/[0-9a-zA-Z\~\$%]+}.json', 'getFile');
 $distDir = '/' . $container->get('distDir');
 $distDir.= '/{filename:[a-zA-Z0-9\-_]+/[a-zA-Z0-9\-_]+/[a-zA-Z0-9\-_.]+}.zip';
 $app->get($distDir, 'getFile');

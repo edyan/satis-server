@@ -3,13 +3,14 @@
     "description": "Endpoint to manage satis actions",
     "type": "project",
     "require": {
-        "slim/slim": "^4.4",
-        "slim/psr7": "^1.0",
-        "vlucas/phpdotenv": "^4.1",
-        "symfony/process": "^5.0",
+        "cocur/slugify": "^4.0",
         "php-di/php-di": "^6.1",
+        "slim/psr7": "^1.0",
+        "slim/slim": "^4.4",
         "symfony/filesystem": "^5.0",
-        "cocur/slugify": "^4.0"
+        "symfony/process": "^5.0",
+        "vlucas/phpdotenv": "^4.1",
+        "php": ">=7.4"
     },
     "license": "Apache2",
     "authors": [
